@@ -1,6 +1,6 @@
 /*
  * grunt-git-subrepos
- * https://github.com/fabian/grunt-git-subrepos
+ * https://github.com/fur6y/grunt-git-subrepos
  *
  * Copyright (c) 2016 Fabian Fetting
  * Licensed under the MIT license.
@@ -42,24 +42,6 @@ module.exports = function (grunt) {
                         repo: 'url://test',
                     },
                 ],
-                // files: [
-                //     {
-                //         cwd: 'test/',
-                //         ex: {
-                //             repository: 'git@github.com:fur6y/example1.git',
-                //             branch: 'feature/example1',
-                //             directory: 'example1',
-                //             remote: 'origin',
-                //         },
-                //     },
-                //     {
-                //         cwd: 'test/',
-                //         repository: 'git@github.com:fur6y/example1.git',
-                //         branch: 'feature/example1',
-                //         directory: 'example1',
-                //         remote: 'origin',
-                //     },
-                // ]
             },
         },
 
