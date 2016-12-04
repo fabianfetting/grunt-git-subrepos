@@ -23,8 +23,38 @@ module.exports = function (grunt) {
                 doneCallback(code === 0 && result === 'true');
             });
         },
+        branchName: function (path, doneCallback) {
+            grunt.util.spawn(
+                {
+                    cmd: 'git',
+                    grunt: false,
+                    args: ['rev-parse', '--abbrev-ref', 'HEAD'],
+                    opts: {
+                        cwd: path,
+                    },
+                },
+                function doneFunction(error, result, code) {
+                    doneCallback(String(result));
+                }
+            );
+        },
         isUntouched: function (path, doneCallback) {
-            doneCallback(true);
+            this.branchName(path, function (currentBranch) {
+                grunt.util.spawn(
+                    {
+                        cmd: 'git',
+                        grunt: false,
+                        args: ['diff', '--quiet', 'origin/' + currentBranch],
+                        opts: {
+                            cwd: path,
+                        },
+                    },
+                    function doneFunction(error, result, code) {
+                        var isUnchanged = code === 0;
+                        doneCallback(isUnchanged);
+                    }
+                );
+            });
         },
         clone: function (path, repo, branch, doneCallback) {
             var args = [];
