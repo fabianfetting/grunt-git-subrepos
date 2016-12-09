@@ -1,6 +1,6 @@
 {
   "name": "grunt-git-subrepos",
-  "description": "Description.",
+  "description": "Clone and update a list of git repositories.",
   "version": "0.1.0",
   "homepage": "https://github.com/fur6y/grunt-git-subrepos",
   "author": {
@@ -37,6 +37,10 @@
   },
   "keywords": [
     "gruntplugin",
-    "git"
+    "git",
+    "clone",
+    "pull",
+    "repo",
+    "repository"
   ]
 }

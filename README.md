@@ -1,6 +1,6 @@
 # grunt-git-subrepos
 
-> Description.
+> Clone and update a list of git repositories.
 
 ## Getting Started
 This plugin requires Grunt `>=0.4.5`
@@ -17,14 +17,14 @@ Once the plugin has been installed, it may be enabled inside your Gruntfile with
 grunt.loadNpmTasks('grunt-git-subrepos');
 ```
 
-## The "git_subrepos" task
+## The "subrepos" task
 
 ### Overview
-In your project's Gruntfile, add a section named `git_subrepos` to the data object passed into `grunt.initConfig()`.
+In your project's Gruntfile, add a section named `subrepos` to the data object passed into `grunt.initConfig()`.
 
 ```js
 grunt.initConfig({
-  git_subrepos: {
+  subrepos: {
     options: {
       // Task-specific options go here.
     },
@@ -37,18 +37,58 @@ grunt.initConfig({
 
 ### Options
 
-#### options.aOption
-Type: `String`
-Default value: `default`
+#### options.force
+Type: `Boolean`
+Default value: `false`
 
-A string value that is used to do something with whatever.
+Set this option to force the task not to exit on changes at a repository. It only prints an error message.
+
+
+### Src
+Type: `String`
+
+The directories to put the repositories in.
+
+
+### Repo
+
+#### name
+Type: `String`
+
+The directory name of the repository.
+
+#### url
+Type: `String`
+
+The repository url.
+
+#### branch
+Type: `String`
+Default value: remote repository’s HEAD (e.g. master)
+
+The repository branch.
 
 
 ### Usage Examples
 
 ```js
-task: {
+subrepos: {
     options: {
+        force: true,
+    },
+    example: {
+        src: 'components',
+        repos: [
+            {
+                name: 'spoon',
+                url: 'git@github.com:octocat/Spoon-Knife.git',
+                branch: 'test-branch', // optional
+            },
+            {
+                name: 'Hello-World',
+                url: 'git@github.com:octocat/Hello-World.git',
+            }
+        ],
     },
 }
 ```
