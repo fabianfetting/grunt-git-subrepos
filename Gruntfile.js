@@ -17,21 +17,21 @@ module.exports = (grunt) => {
                 options: {
                     force: true,
                 },
-                src: 'repo-test/repos1', // NOTE: avoid ** ; **/* because recursive cloning repo into repo
+                src: 'components', // NOTE: avoid "**", "**/*" b/c it causes recursive cloning of repos into repos
                 repos: [
                     {
-                        name: 'measurement', // needed
-                        url: 'git@gitlab.greenpocket.intern:product/measurement-view.git', // needed
-                        branch: 'develop', // optional
+                        name: 'spoon',
+                        url: 'git@github.com:octocat/Spoon-Knife.git',
+                        branch: 'master',
                     },
                     {
-                        name: 'measurement2', // needed
-                        url: 'git@gitlab.greenpocket.intern:product/measurement-view.git', // needed
-                        branch: '2.8.0', // optional
+                        name: 'hello_world',
+                        url: 'git@github.com:octocat/Hello-World.git',
+                        branch: 'test',
                     },
                     {
-                        name: 'measurement3', // needed
-                        url: 'git@gitlab.greenpocket.intern:product/measurement-view.git', // needed
+                        name: 'Hello-World',
+                        url: 'git@github.com:octocat/Hello-World.git',
                     },
                 ],
             },
