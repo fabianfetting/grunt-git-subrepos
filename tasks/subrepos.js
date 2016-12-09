@@ -6,142 +6,70 @@
  * Licensed under the MIT license.
  */
 
-'use strict';
+const gitHelper = require('./lib/git-helper');
 
-module.exports = function (grunt) {
+module.exports = function subrepos(grunt) {
+    const git = gitHelper(grunt);
 
-    var git = {
-        isRepo: function(path, doneCallback) {
-            grunt.log.debug('Cwd:', process.cwd() + '/' + path);
-            grunt.log.debug('Spawn cmd:', 'git rev-parse --is-inside-work-tree --quiet');
+    grunt.registerMultiTask('subrepos', 'Description.', function subreposTask() {
+        this.requiresConfig([this.name, this.target, 'repos'].join('.'));
 
-            grunt.util.spawn({
-                cmd: 'git',
-                args: ['rev-parse', '--quiet', '--is-inside-work-tree'],
-                opts: { cwd: process.cwd() + '/' + path },
-            }, function (error, result, code) {
-                doneCallback(code === 0 && result === 'true');
-            });
-        },
-        branchName: function (path, doneCallback) {
-            grunt.util.spawn(
-                {
-                    cmd: 'git',
-                    grunt: false,
-                    args: ['rev-parse', '--abbrev-ref', 'HEAD'],
-                    opts: {
-                        cwd: path,
-                    },
-                },
-                function doneFunction(error, result, code) {
-                    doneCallback(String(result));
-                }
-            );
-        },
-        isUntouched: function (path, doneCallback) {
-            this.branchName(path, function (currentBranch) {
-                grunt.util.spawn(
-                    {
-                        cmd: 'git',
-                        grunt: false,
-                        args: ['diff', '--quiet', 'origin/' + currentBranch],
-                        opts: {
-                            cwd: path,
-                        },
-                    },
-                    function doneFunction(error, result, code) {
-                        var isUnchanged = code === 0;
-                        doneCallback(isUnchanged);
-                    }
-                );
-            });
-        },
-        clone: function (path, repo, branch, doneCallback) {
-            var args = [];
-            args.push('clone', '--quiet');
-            if (branch) { args.push('--branch', branch); }
-            args.push(repo, path);
-
-            grunt.log.debug('Spawn cmd:', 'git', args);
-
-            if (grunt.option('no-write')) { return doneCallback(); }
-
-            grunt.util.spawn({
-                cmd: 'git',
-                args: args,
-            }, doneCallback);
-        },
-        checkout: function(path, branch, doneCallback) {
-            grunt.log.debug('Spawn cmd:', 'git checkout --quiet ' + branch);
-            doneCallback();
-        },
-        pull: function(path, doneCallback) {
-            grunt.log.debug('Spawn cmd:', 'git pull --quiet');
-            doneCallback();
-        },
-    };
-
-    grunt.registerMultiTask('subrepos', 'Description.', function () {
-        var done = this.async();
-
-        var options = this.options({
+        const done = this.async();
+        const options = this.options({
             force: false,
         });
+        const promises = [];
 
-        this.files.forEach(function (file) {
-            var repo = file.repo;
-            var repoName = file.repoName || '';
-            var branch = file.branch || '';
+        this.filesSrc.forEach((file) => {
+            if (!grunt.file.isDir(file)) {
+                grunt.log.error(`Skipped path "${file}" because it's not a directory.`.red);
+                return;
+            }
 
-            grunt.verbose.writeln('');
-            grunt.verbose.write('Repo:', '\'' + repo.cyan + '\'');
-            grunt.verbose.write(', ');
-            grunt.verbose.write('RepoName:', '\'' + repoName.cyan + '\'');
-            grunt.verbose.write(', ');
-            grunt.verbose.writeln('Branch:', '\'' + branch.cyan + '\'');
+            grunt.log.debug('Dir:', file);
 
-            file.src.forEach(function (filePath, i) {
-                filePath += repoName || '';
-                grunt.verbose.writeln('Path: ' + filePath.cyan);
+            this.data.repos.forEach((repo) => {
+                const separator = file.endsWith('/') ? '' : '/';
+                const path = file + separator + repo.name;
+                const repoConfig = Object.assign({ path }, repo);
 
-                if (!grunt.file.isDir(filePath)) {
-                    grunt.log.debug('Path ' + filePath + ' NOT exists.');
-                    grunt.file.mkdir(filePath);
-                    git.clone(filePath, repo, branch, function () {
-                        grunt.verbose.ok();
-                    });
-
+                let promise;
+                if (!grunt.file.isDir(path)) {
+                    grunt.log.writeln(`Cloning ${path.cyan}...`);
+                    promise = git.clone(repoConfig);
                 } else {
-                    grunt.log.debug('Path ' + filePath + ' exists.');
-
-                    git.isRepo(filePath, function (isRepo) {
-                        if (isRepo) {
-                            git.isUntouched(filePath, function (isUntouched) {
-                                if (isUntouched) {
-                                    grunt.log.debug('Git repo exists.');
-
-                                    git.checkout(filePath, branch, function () {
-                                        git.pull(filePath, function () {
-                                            grunt.verbose.ok();
-                                        });
-                                    });
-
-                                } else {
-                                    grunt.log.errorlns('Could\'t update repo because of local changes.');
-                                }
-                            });
-
-                        } else {
-                            grunt.fail.warn('Path ' + filePath + ' exists but is not a git repository.');
-                            grunt.verbose.ok();
-                        }
-                    });
-
+                    grunt.log.writeln(`Updating ${path.cyan}...`);
+                    promise = git.update(repoConfig);
                 }
+                promises.push(promise);
             });
         });
 
-        done();
-    });
+        Promise.all(promises)
+        .then((results = []) => {
+            grunt.log.debug('Done results:', results);
+            grunt.log.ok();
+            done();
+        })
+        .catch(([status, repo = { name: '-' }]) => {
+            grunt.log.debug('Error result:', status, repo);
 
+            if (status !== git.status.CHANGED && status !== git.status.LOCAL_COMMITS) {
+                grunt.fail.fatal(status);
+            } else {
+                let errorMessage = `Skipped update of repository "${repo.path}".`;
+                if (status === git.status.CHANGED) { errorMessage += ' It has local changes.'; }
+                if (status === git.status.LOCAL_COMMITS) { errorMessage += ' It has local commits.'; }
+
+                if (options.force) {
+                    grunt.log.error(errorMessage.red);
+                } else {
+                    grunt.fail.warn(errorMessage);
+                }
+            }
+
+            grunt.log.ok();
+            done();
+        });
+    });
 };
