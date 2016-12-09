@@ -1,7 +1,7 @@
 {
   "name": "grunt-git-subrepos",
   "description": "Clone and update a list of git repositories.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "homepage": "https://github.com/fur6y/grunt-git-subrepos",
   "author": {
     "name": "Fabian Fetting",
